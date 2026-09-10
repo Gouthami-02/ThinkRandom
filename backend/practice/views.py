@@ -117,3 +117,18 @@ def complete_practice_session(request, pk):
     serializer = PracticeSessionSerializer(session)
 
     return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def practice_history(request):
+
+    sessions = PracticeSession.objects.filter(
+        user=request.user
+    ).order_by('-started_at')
+
+    serializer = PracticeSessionSerializer(
+        sessions,
+        many=True
+    )
+
+    return Response(serializer.data)

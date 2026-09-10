@@ -1,6 +1,10 @@
 from django.urls import path
 
-from .views import start_practice_session,complete_practice_session
+from .views import(
+     start_practice_session,
+     complete_practice_session,
+     practice_history,
+)
 
 
 urlpatterns = [
@@ -13,5 +17,10 @@ urlpatterns = [
         'sessions/<int:pk>/complete/',
         complete_practice_session,
         name='complete-practice-session'
+    ),
+    path(
+        'history/',
+        practice_history,
+        name='practice-history'
     ),
 ]
