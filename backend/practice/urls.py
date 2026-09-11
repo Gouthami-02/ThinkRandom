@@ -5,6 +5,7 @@ from .views import(
      complete_practice_session,
      practice_history,
      topic_history,
+     adaptive_challenge,
 )
 
 
@@ -25,4 +26,5 @@ urlpatterns = [
         name='practice-history'
     ),
     path('topic-history/', topic_history, name='topic-history'),
+    path('adaptive-challenge/', adaptive_challenge, name='adaptive-challenge'),
 ]
