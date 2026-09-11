@@ -7,8 +7,8 @@ from rest_framework import status
 
 from topics.models import Topic
 
-from .models import PracticeSession
-from .serializers import PracticeSessionSerializer
+from .models import PracticeSession, TopicHistory
+from .serializers import PracticeSessionSerializer, TopicHistorySerializer
 
 
 @api_view(['POST'])
@@ -35,6 +35,10 @@ def start_practice_session(request):
         )
 
     session = PracticeSession.objects.create(
+        user=request.user,
+        topic=topic
+    )
+    TopicHistory.objects.create(
         user=request.user,
         topic=topic
     )
@@ -128,6 +132,20 @@ def practice_history(request):
 
     serializer = PracticeSessionSerializer(
         sessions,
+        many=True
+    )
+
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def topic_history(request):
+    history = TopicHistory.objects.filter(
+        user=request.user
+    ).select_related('topic').order_by('-viewed_at')
+
+    serializer = TopicHistorySerializer(
+        history,
         many=True
     )
 

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import PracticeSession
+from .models import PracticeSession,TopicHistory
 
 
 class PracticeSessionSerializer(serializers.ModelSerializer):
@@ -25,4 +25,19 @@ class PracticeSessionSerializer(serializers.ModelSerializer):
             'duration_seconds',
             'score',
             'status',
+        ]
+
+class TopicHistorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TopicHistory
+        fields = [
+            'id',
+            'topic',
+            'viewed_at',
+        ]
+
+        read_only_fields = [
+            'id',
+            'viewed_at',
         ]

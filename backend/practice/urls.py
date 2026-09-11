@@ -4,6 +4,7 @@ from .views import(
      start_practice_session,
      complete_practice_session,
      practice_history,
+     topic_history,
 )
 
 
@@ -23,4 +24,5 @@ urlpatterns = [
         practice_history,
         name='practice-history'
     ),
+    path('topic-history/', topic_history, name='topic-history'),
 ]

@@ -71,7 +71,7 @@ def add_favorite(request, pk):
         topic = Topic.objects.get(
             id=pk,
             is_active=True
-        )
+        ) 
     except Topic.DoesNotExist:
         return Response(
             {'detail': 'Topic not found.'},

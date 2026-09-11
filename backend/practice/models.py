@@ -54,3 +54,24 @@ class PracticeSession(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.topic.question[:50]}"
+
+class TopicHistory(models.Model):
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='topic_history'
+    )
+
+    topic = models.ForeignKey(
+        Topic,
+        on_delete=models.CASCADE,
+        related_name='history_records'
+    )
+
+    viewed_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"{self.user.username} - {self.topic.question[:50]}"
