@@ -6,7 +6,8 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 
-from .serializers import RegisterSerializer
+from .serializers import RegisterSerializer, UserProfileSerializer
+from .models import UserProfile
 
 
 @api_view(['POST'])
@@ -15,6 +16,7 @@ def register(request):
 
     if serializer.is_valid():
         user = serializer.save()
+        UserProfile.objects.create(user=user)
 
         return Response(
             {
@@ -65,15 +67,41 @@ def login(request):
         status=status.HTTP_200_OK
     )
 
-@api_view(['GET'])
+@api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
 def profile(request):
+
     user = request.user
 
-    return Response(
-        {
+    profile, created = UserProfile.objects.get_or_create(
+        user=user
+    )
+
+    if request.method == 'GET':
+        return Response({
             'id': user.id,
             'username': user.username,
             'email': user.email,
-        }
+            'interests': profile.interests,
+        })
+
+    serializer = UserProfileSerializer(
+        profile,
+        data=request.data,
+        partial=True
+    )
+
+    if serializer.is_valid():
+        serializer.save()
+
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'interests': profile.interests,
+        })
+
+    return Response(
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST
     )

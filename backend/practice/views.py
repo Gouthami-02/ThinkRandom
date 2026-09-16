@@ -1,4 +1,4 @@
-
+import random
 from django.utils import timezone
 from django.db.models import Avg
 
@@ -163,6 +163,7 @@ def adaptive_challenge(request):
         status='Completed',
         score__isnull=False
     )
+    user_interests = request.user.profile.interests
 
     weakest_category = (
         completed_sessions
@@ -173,7 +174,7 @@ def adaptive_challenge(request):
     )
 
     if weakest_category:
-        category = weakest_category['topic__category']
+        weakest_category_name = weakest_category['topic__category']
         average_score = weakest_category['average_score']
 
         if average_score >= 80:
@@ -183,34 +184,89 @@ def adaptive_challenge(request):
         else:
             target_difficulty = 'Easy'
     else:
-        category = None
+        weakest_category_name = None
+        average_score = None
         target_difficulty = 'Medium'
 
-    if category:
-        candidate_topics = Topic.objects.filter(
-            category=category,
-            difficulty=target_difficulty,
-            is_active=True
-        )
+    profile = getattr(request.user, 'profile', None)
+
+    if profile:
+        user_interests = profile.interests or []
     else:
-        candidate_topics = Topic.objects.filter(
-            difficulty=target_difficulty,
-            is_active=True
+        user_interests = []
+
+
+    recent_topic_ids = set(
+       TopicHistory.objects.filter(
+         user=request.user
+       ).values_list(
+         'topic_id',
+          flat=True
+       )
+   )
+
+
+    candidate_topics = Topic.objects.filter(
+        is_active=True
+    )
+
+
+    best_topic = None
+    best_score = -1
+
+    for topic in candidate_topics:
+
+        # 30% - Weakness
+        if weakest_category_name:
+          weakness_score = (
+            1.0
+            if topic.category == weakest_category_name
+            else 0.0
+         )
+        else:
+           weakness_score = 0.5
+
+         # 25% - Difficulty progression
+        difficulty_score = (
+           1.0
+           if topic.difficulty == target_difficulty
+           else 0.0
         )
 
-    recent_topics = TopicHistory.objects.filter(
-        user=request.user
-    ).values_list(
-        'topic_id',
-        flat=True
-    )
+         # 20% - User interests
+        interest_score = (
+          1.0
+          if topic.category in user_interests
+          else 0.0
+        )
 
-    fresh_topics = candidate_topics.exclude(
-        id__in=recent_topics
-    )
+          # 15% - Topic freshness
+        freshness_score = (
+           1.0
+           if topic.id not in recent_topic_ids
+           else 0.0
+        )
 
-    if fresh_topics.exists():
-        candidate_topics = fresh_topics
+         # 10% - Randomness
+        randomness_score = random.random()
+
+        total_score = (
+             weakness_score * 0.30
+             + difficulty_score * 0.25
+             + interest_score * 0.20
+             + freshness_score * 0.15
+            + randomness_score * 0.10
+        )
+
+        if total_score > best_score:
+           best_score = total_score
+           best_topic = topic
+
+
+    topic = best_topic
+    selection_score = round(best_score, 3)
+
+   
 
     topic = candidate_topics.order_by('?').first()
 
@@ -222,9 +278,12 @@ def adaptive_challenge(request):
 
     return Response({
         'topic': TopicSerializer(topic).data,
+        'adaptive_score': selection_score,
         'reason': {
-            'weakest_category': category,
+            'weakest_category': weakest_category_name,
             'target_difficulty': target_difficulty,
+            'user_interests': user_interests,
+
             'strategy': 'Targeting your weakest category with difficulty progression and topic freshness'
         }
     })
