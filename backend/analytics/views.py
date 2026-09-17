@@ -69,3 +69,61 @@ def dashboard(request):
          else None
         ),
     })
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def progress(request):
+
+    sessions = PracticeSession.objects.filter(
+        user=request.user
+    )
+
+    completed_sessions = sessions.filter(
+        status='Completed'
+    )
+
+    scored_sessions = completed_sessions.filter(
+        score__isnull=False
+    )
+
+    total_practices = sessions.count()
+    completed_count = completed_sessions.count()
+
+    average_score = 0
+    best_score = 0
+
+    if scored_sessions.exists():
+
+        scores = [
+            session.score
+            for session in scored_sessions
+        ]
+
+        average_score = round(
+            sum(scores) / len(scores),
+            2
+        )
+
+        best_score = max(scores)
+
+    recent_activity = (
+        completed_sessions
+        .select_related('topic')
+        .order_by('-completed_at')[:5]
+    )
+
+    return Response({
+        'total_practices': total_practices,
+        'completed_practices': completed_count,
+        'average_score': average_score,
+        'best_score': best_score,
+        'recent_activity': [
+            {
+                'session_id': session.id,
+                'topic': session.topic.question,
+                'category': session.topic.category,
+                'score': session.score,
+                'completed_at': session.completed_at,
+            }
+            for session in recent_activity
+        ],
+    })
