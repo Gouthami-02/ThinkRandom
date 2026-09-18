@@ -4,6 +4,7 @@ from rest_framework.response import Response
 
 from practice.models import PracticeSession
 from django.db.models import Avg
+from django.contrib.auth.models import User
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -126,4 +127,55 @@ def progress(request):
             }
             for session in recent_activity
         ],
+    })
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def leaderboard(request):
+
+    users = User.objects.filter(
+        practice_sessions__status='Completed',
+        practice_sessions__score__isnull=False
+    ).distinct()
+
+    leaderboard_data = []
+
+    for user in users:
+
+        completed_sessions = PracticeSession.objects.filter(
+            user=user,
+            status='Completed',
+            score__isnull=False
+        )
+
+        scores = [
+            session.score
+            for session in completed_sessions
+        ]
+
+        average_score = round(
+            sum(scores) / len(scores),
+            2
+        )
+
+        leaderboard_data.append({
+            'username': user.username,
+            'completed_practices': len(scores),
+            'average_score': average_score,
+        })
+
+    leaderboard_data.sort(
+        key=lambda item: (
+            -item['average_score'],
+            -item['completed_practices']
+        )
+    )
+
+    for index, item in enumerate(
+        leaderboard_data,
+        start=1
+    ):
+        item['rank'] = index
+
+    return Response({
+        'leaderboard': leaderboard_data
     })
