@@ -41,6 +41,10 @@ class PracticeSession(models.Model):
         blank=True
     )
 
+    answer = models.TextField(
+        blank=True
+    )
+
     score = models.PositiveIntegerField(
         null=True,
         blank=True
@@ -75,3 +79,50 @@ class TopicHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.topic.question[:50]}"
+
+class SpeechAnalysis(models.Model):
+
+    session = models.OneToOneField(
+        PracticeSession,
+        on_delete=models.CASCADE,
+        related_name='speech_analysis'
+    )
+
+    transcript = models.TextField(
+        blank=True
+    )
+
+    clarity_score = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    structure_score = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    vocabulary_score = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    fluency_score = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    filler_word_count = models.PositiveIntegerField(
+        default=0
+    )
+
+    feedback = models.TextField(
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"Analysis for Session {self.session.id}"    

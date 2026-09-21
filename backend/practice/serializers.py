@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import PracticeSession,TopicHistory
+from .models import PracticeSession, TopicHistory, SpeechAnalysis
 
 
 class PracticeSessionSerializer(serializers.ModelSerializer):
@@ -14,6 +14,7 @@ class PracticeSessionSerializer(serializers.ModelSerializer):
             'completed_at',
             'duration_seconds',
             'notes',
+            'answer',
             'score',
             'status',
         ]
@@ -40,4 +41,25 @@ class TopicHistorySerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id',
             'viewed_at',
+        ]
+class SpeechAnalysisSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SpeechAnalysis
+        fields = [
+            'id',
+            'session',
+            'transcript',
+            'clarity_score',
+            'structure_score',
+            'vocabulary_score',
+            'fluency_score',
+            'filler_word_count',
+            'feedback',
+            'created_at',
+        ]
+
+        read_only_fields = [
+            'id',
+            'created_at',
         ]

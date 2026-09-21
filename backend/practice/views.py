@@ -11,8 +11,17 @@ from rest_framework import status
 from topics.models import Topic
 from topics.serializers import TopicSerializer
 
-from .models import PracticeSession, TopicHistory
-from .serializers import PracticeSessionSerializer, TopicHistorySerializer
+from .models import (
+    PracticeSession,
+    TopicHistory,
+    SpeechAnalysis,
+)
+from .serializers import (
+    PracticeSessionSerializer,
+    TopicHistorySerializer,
+    SpeechAnalysisSerializer,
+)
+from .ai_service import analyze_answer
 
 
 @api_view(['POST'])
@@ -77,6 +86,7 @@ def complete_practice_session(request, pk):
 
     duration_seconds = request.data.get('duration_seconds')
     notes = request.data.get('notes', '')
+    answer = request.data.get('answer', '')
     score = request.data.get('score')
 
     if duration_seconds is None:
@@ -116,6 +126,7 @@ def complete_practice_session(request, pk):
 
     session.duration_seconds = duration_seconds
     session.notes = notes
+    session.answer = answer
     session.score = score
     session.status = 'Completed'
     session.completed_at = timezone.now()
@@ -287,3 +298,92 @@ def adaptive_challenge(request):
             'strategy': 'Targeting your weakest category with difficulty progression and topic freshness'
         }
     })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def speech_analysis(request, session_id):
+
+    try:
+        session = PracticeSession.objects.get(
+            id=session_id,
+            user=request.user
+        )
+    except PracticeSession.DoesNotExist:
+        return Response(
+            {'detail': 'Practice session not found.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    try:
+        analysis = session.speech_analysis
+    except SpeechAnalysis.DoesNotExist:
+        return Response(
+            {'detail': 'Speech analysis not available yet.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = SpeechAnalysisSerializer(analysis)
+
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_speech_analysis(request, session_id):
+
+    try:
+        session = PracticeSession.objects.get(
+            id=session_id,
+            user=request.user
+        )
+    except PracticeSession.DoesNotExist:
+        return Response(
+            {'detail': 'Practice session not found.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    if session.status != 'Completed':
+        return Response(
+            {'detail': 'Complete the practice session before requesting analysis.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if not session.answer.strip():
+        return Response(
+            {'detail': 'No answer available for analysis.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        result = analyze_answer(
+            session.answer,
+            session.topic.question
+        )
+    except Exception:
+     return Response(
+        {
+            'detail': (
+                'AI analysis is temporarily unavailable. '
+                'Please try again.'
+            )
+        },
+        status=status.HTTP_503_SERVICE_UNAVAILABLE
+    )
+
+    analysis, created = SpeechAnalysis.objects.update_or_create(
+        session=session,
+        defaults={
+            'transcript': session.answer,
+            'clarity_score': result['clarity_score'],
+            'structure_score': result['structure_score'],
+            'vocabulary_score': result['vocabulary_score'],
+            'fluency_score': result['fluency_score'],
+            'filler_word_count': result['filler_word_count'],
+            'feedback': result['feedback'],
+        }
+    )
+
+    serializer = SpeechAnalysisSerializer(analysis)
+
+    return Response(
+        serializer.data,
+        status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
+    )

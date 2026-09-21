@@ -6,6 +6,8 @@ from .views import(
      practice_history,
      topic_history,
      adaptive_challenge,
+     speech_analysis,
+     generate_speech_analysis,
 )
 
 
@@ -27,4 +29,14 @@ urlpatterns = [
     ),
     path('topic-history/', topic_history, name='topic-history'),
     path('adaptive-challenge/', adaptive_challenge, name='adaptive-challenge'),
+    path(
+    'sessions/<int:session_id>/analysis/',
+    speech_analysis,
+    name='speech-analysis'
+    ),
+    path(
+    'sessions/<int:session_id>/analyze/',
+    generate_speech_analysis,
+    name='generate-speech-analysis'
+    ),
 ]
