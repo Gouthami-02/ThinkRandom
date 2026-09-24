@@ -61,51 +61,66 @@ function History() {
         </div>
       ) : (
         <div className="row g-4">
-          {history.map((session) => (
-            <div
-              className="col-md-6 col-lg-4"
-              key={session.id}
-            >
-              <div className="card shadow-sm border-0 h-100">
-                <div className="card-body p-4">
-                  <div className="mb-3">
-                    <span className="badge text-bg-primary me-2">
-                      {session.topic_question}
-                    </span>
-                    <span className="badge text-bg-success">
-                      {session.status}
-                    </span>
-                  </div>
+{history.map((session) => (
+  <div
+    className="col-md-6 col-lg-4"
+    key={session.id}
+  >
+    <div className="card shadow-sm border-0 h-100">
+      <div className="card-body p-4">
 
-                  <h5 className="fw-bold">
-                    Practice #{session.id}
-                  </h5>
+        <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <h5 className="fw-bold mb-0">
+            Practice #{session.id}
+          </h5>
 
-                  <p className="text-muted mb-2">
-                    Score:{" "}
-                    <strong>
-                      {session.score ?? "Not scored"}
-                    </strong>
-                  </p>
+          <span className="badge text-bg-success">
+            {session.status}
+          </span>
+        </div>
 
-                  <p className="text-muted mb-2">
-                    Duration:{" "}
-                    {session.duration_seconds ?? 0} seconds
-                  </p>
+        <p className="fw-semibold mb-4 text-break">
+          {session.topic_question}
+        </p>
 
-                  <p className="text-muted small mb-0">
-                    {new Date(
-                      session.started_at
-                    ).toLocaleString()}
-                  </p>
-                </div>
-              </div>
+        <div className="row g-3 mb-4">
+          <div className="col-6">
+            <div className="border rounded p-3">
+              <small className="text-muted d-block">
+                Score
+              </small>
+              <strong className="fs-5">
+                {session.score ?? "Not scored"}
+              </strong>
             </div>
-          ))}
+          </div>
+
+          <div className="col-6">
+            <div className="border rounded p-3">
+              <small className="text-muted d-block">
+                Duration
+              </small>
+              <strong className="fs-5">
+                {session.duration_seconds ?? 0} sec
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-muted small mb-0">
+          {new Date(session.started_at).toLocaleString()}
+        </p>
+
+      </div>
+    </div>
+  </div>
+))}
         </div>
       )}
-    </div>
+      </div>
   );
 }
+
+      
 
 export default History;
