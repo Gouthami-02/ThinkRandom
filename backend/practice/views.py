@@ -380,7 +380,17 @@ def generate_speech_analysis(request, session_id):
             'feedback': result['feedback'],
         }
     )
+    ai_score = round(
+      (
+        result['clarity_score']
+        + result['structure_score']
+        + result['vocabulary_score']
+        + result['fluency_score']
+      ) / 4
+    )
 
+    session.score = ai_score
+    session.save(update_fields=['score'])
     serializer = SpeechAnalysisSerializer(analysis)
 
     return Response(

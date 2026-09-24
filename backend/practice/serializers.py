@@ -4,12 +4,17 @@ from .models import PracticeSession, TopicHistory, SpeechAnalysis
 
 
 class PracticeSessionSerializer(serializers.ModelSerializer):
+    topic_question = serializers.CharField(
+      source='topic.question',
+      read_only=True
+    )
 
     class Meta:
         model = PracticeSession
         fields = [
             'id',
             'topic',
+            'topic_question',
             'started_at',
             'completed_at',
             'duration_seconds',
